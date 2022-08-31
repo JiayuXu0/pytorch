@@ -2520,7 +2520,8 @@ def group_norm(
     """
     if has_torch_function_variadic(input, weight, bias):
         return handle_torch_function(group_norm, (input, weight, bias,), input, num_groups, weight=weight, bias=bias, eps=eps)
-    _verify_batch_size([input.size(0) * input.size(1) // num_groups, num_groups] + list(input.size()[2:]))
+    _verify_batch_size([torch.div(input.size(0) * input.size(1), num_groups,
+                       rounding_mode='floor'), num_groups] + list(input.size()[2:]))
     return torch.group_norm(input, num_groups, weight, bias, eps, torch.backends.cudnn.enabled)
 
 
@@ -3660,6 +3661,7 @@ Examples::
 """,
 )
 
+
 @_overload  # noqa: F811
 def upsample(input: Tensor, size: Optional[int] = None, scale_factor: Optional[float] = None, mode: str = "nearest", align_corners: Optional[bool] = None) -> Tensor:  # noqa: F811
     pass
@@ -3761,6 +3763,7 @@ def interpolate(  # noqa: F811
     antialias: bool = False,
 ) -> Tensor:  # noqa: F811
     pass
+
 
 def interpolate(input: Tensor, size: Optional[int] = None, scale_factor: Optional[List[float]] = None, mode: str = 'nearest', align_corners: Optional[bool] = None, recompute_scale_factor: Optional[bool] = None, antialias: bool = False) -> Tensor:  # noqa: F811
     r"""Down/up samples the input to either the given :attr:`size` or the given
@@ -4712,6 +4715,7 @@ def fold(
 # multihead attention
 #
 
+
 def _in_projection_packed(
     q: Tensor,
     k: Tensor,
@@ -4916,6 +4920,7 @@ def _mha_shape_check(query: Tensor, key: Tensor, value: Tensor,
 
     return is_batched
 
+
 def multi_head_attention_forward(
     query: Tensor,
     key: Tensor,
@@ -5094,12 +5099,14 @@ def multi_head_attention_forward(
         if attn_mask.dim() == 2:
             correct_2d_size = (tgt_len, src_len)
             if attn_mask.shape != correct_2d_size:
-                raise RuntimeError(f"The shape of the 2D attn_mask is {attn_mask.shape}, but should be {correct_2d_size}.")
+                raise RuntimeError(
+                    f"The shape of the 2D attn_mask is {attn_mask.shape}, but should be {correct_2d_size}.")
             attn_mask = attn_mask.unsqueeze(0)
         elif attn_mask.dim() == 3:
             correct_3d_size = (bsz * num_heads, tgt_len, src_len)
             if attn_mask.shape != correct_3d_size:
-                raise RuntimeError(f"The shape of the 3D attn_mask is {attn_mask.shape}, but should be {correct_3d_size}.")
+                raise RuntimeError(
+                    f"The shape of the 3D attn_mask is {attn_mask.shape}, but should be {correct_3d_size}.")
         else:
             raise RuntimeError(f"attn_mask's dimension {attn_mask.dim()} is not supported")
 
